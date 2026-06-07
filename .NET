@@ -1,0 +1,479 @@
+RESUMO .NET ADVANCED - ASTROTRACK
+GLOBAL SOLUTION 2026/1 - FIAP
+================================================
+
+1. OBJETIVO DA API
+
+O AstroTrack e uma API REST criada em ASP.NET Core com .NET 9.
+A solucao gerencia logistica satelital para frotas em zonas sem sinal de internet terrestre.
+A API controla clientes, motoristas, veiculos, viagens e checkpoints de rastreamento GPS.
+Os dados de localizacao sao enviados por dispositivos IoT via satelite e persistidos no Oracle.
+
+
+2. ARQUITETURA DO PROJETO
+
+O projeto segue organizacao em camadas:
+- Controllers: recebem as requisicoes HTTP e retornam as respostas.
+- Services: executam as regras de negocio.
+- Repositories: acessam o banco de dados via Entity Framework Core.
+- DTOs: transportam dados de entrada (Requests) e saida (Responses).
+- Models: representam as entidades mapeadas no banco Oracle.
+- Mappers: convertem entidades em DTOs de resposta.
+- Exceptions: centralizam o tratamento global de erros.
+- Infrastructure: servicos de JWT e usuario autenticado.
+
+Fluxo principal:
+Controller -> Service -> Repository -> AppDbContext -> Oracle
+
+
+3. ORGANIZACAO DAS PASTAS
+
+Controllers/              - Endpoints HTTP
+Models/                   - Entidades do banco
+Enums/                    - StatusCadastro, StatusVeiculo, StatusViagem
+DTOs/Requests/            - Records de entrada com validacoes
+DTOs/Responses/           - Records de saida
+Data/                     - AppDbContext e AppDbContextFactory
+Repositories/Interfaces/  - IRepositories.cs com todas as interfaces
+Repositories/Implementations/ - Repositories.cs com todas as implementacoes
+Services/Interfaces/      - IServices.cs com todas as interfaces
+Services/Implementations/ - Services.cs com todas as implementacoes
+Mappers/                  - AstroTrackMapper
+Exceptions/               - AppExceptions e GlobalExceptionMiddleware
+Infrastructure/           - JwtService e CurrentUserService
+Migrations/               - Migrations geradas pelo EF Core
+
+
+4. ENTIDADES DO DOMINIO
+
+- Cliente: empresas que contratam o servico de transporte.
+- Motorista: condutor do veiculo na viagem.
+- Veiculo: caminhao ou veiculo rastreado.
+- Viagem: associa cliente, motorista e veiculo com origem e destino.
+- Checkpoint: ponto de rastreamento GPS registrado durante a viagem.
+- UsuarioSistema: usuario autenticado na API.
+
+
+5. CRUD COMPLETO
+
+A API possui CRUD completo para todas as entidades:
+- Clientes
+- Motoristas
+- Veiculos
+- Viagens
+- Checkpoints
+
+Operacoes implementadas:
+- GET    para listar todos os recursos.
+- GET    por ID para buscar um recurso especifico.
+- POST   para criar um novo recurso.
+- PUT    por ID para atualizar um recurso existente.
+- DELETE por ID para remover um recurso.
+
+
+6. ENDPOINTS PRINCIPAIS
+
+Autenticacao (rotas publicas):
+- POST /api/auth/register  - Registrar novo usuario
+- POST /api/auth/login     - Login e obter token JWT
+
+Clientes (protegidos por JWT):
+- GET    /api/clientes
+- GET    /api/clientes/{id}
+- POST   /api/clientes
+- PUT    /api/clientes/{id}
+- DELETE /api/clientes/{id}
+
+Motoristas (protegidos por JWT):
+- GET    /api/motoristas
+- GET    /api/motoristas/{id}
+- POST   /api/motoristas
+- PUT    /api/motoristas/{id}
+- DELETE /api/motoristas/{id}
+
+Veiculos (protegidos por JWT):
+- GET    /api/veiculos
+- GET    /api/veiculos/{id}
+- POST   /api/veiculos
+- PUT    /api/veiculos/{id}
+- DELETE /api/veiculos/{id}
+
+Viagens (protegidos por JWT):
+- GET    /api/viagens
+- GET    /api/viagens/status/{status}  - Filtrar por status
+- GET    /api/viagens/{id}
+- POST   /api/viagens
+- PUT    /api/viagens/{id}
+- DELETE /api/viagens/{id}
+
+Checkpoints (protegidos por JWT):
+- GET    /api/checkpoints
+- GET    /api/checkpoints/viagem/{idViagem}  - Historico de rastreamento
+- GET    /api/checkpoints/{id}
+- POST   /api/checkpoints
+- PUT    /api/checkpoints/{id}
+- DELETE /api/checkpoints/{id}
+
+
+7. STATUS HTTP UTILIZADOS
+
+- 200 OK         - Consultas e atualizacoes com sucesso.
+- 201 Created    - Recurso criado com sucesso.
+- 204 No Content - Recurso removido com sucesso.
+- 400 Bad Request - Validacao ou regra de negocio violada.
+- 401 Unauthorized - Token ausente, invalido ou credenciais incorretas.
+- 404 Not Found  - Recurso nao encontrado.
+- 409 Conflict   - Duplicidade de dados unicos (placa, CPF, CNPJ, email).
+- 500 Internal Server Error - Erro nao tratado.
+
+
+8. DTOs E C# RECORDS
+
+O projeto usa C# Records para transferencia de dados.
+Records sao imutaveis e ideais para DTOs por serem concisos e seguros.
+
+Exemplos de Requests:
+- ClienteRequest
+- MotoristaRequest
+- VeiculoRequest
+- ViagemRequest
+- CheckpointRequest
+- RegisterRequest
+- LoginRequest
+
+Exemplos de Responses:
+- ClienteResponse
+- MotoristaResponse
+- VeiculoResponse
+- ViagemResponse
+- CheckpointResponse
+- AuthResponse
+- UsuarioResponse
+
+Os DTOs evitam expor diretamente as entidades do banco de dados.
+
+
+9. VALIDACAO DOS DADOS
+
+As validacoes sao feitas nos Records de Request usando Data Annotations.
+Principais anotacoes usadas:
+- [Required]         - Campo obrigatorio.
+- [StringLength]     - Tamanho minimo e maximo de string.
+- [EmailAddress]     - Formato de e-mail valido.
+- [Range]            - Valores numericos dentro de um intervalo.
+- [RegularExpression] - Padrao especifico, usado na placa do veiculo.
+
+Exemplos de validacao:
+- Placa: regex [A-Z]{3}[0-9][A-Z0-9][0-9]{2} (padrao Mercosul).
+- Ano do veiculo: entre 1980 e 2100.
+- Latitude: entre -90 e 90.
+- Longitude: entre -180 e 180.
+- Senha: entre 6 e 80 caracteres.
+
+
+10. PERSISTENCIA E EF CORE
+
+A persistencia usa Entity Framework Core com Oracle.
+O AppDbContext herda de DbContext e contem os DbSets de todas as entidades.
+A configuracao das entidades e feita via Fluent API no metodo OnModelCreating.
+
+Configuracoes importantes no Fluent API:
+- UseIdentityColumn() para chaves primarias auto-incrementadas.
+- HasConversion<string>() para salvar enums como texto no banco.
+- HasIndex().IsUnique() para garantir unicidade de campos.
+- HasOne/WithMany para mapear relacionamentos.
+- OnDelete(DeleteBehavior.Cascade) para checkpoints ao deletar viagem.
+- OnDelete(DeleteBehavior.Restrict) para viagens com cliente, motorista e veiculo.
+- ValueGeneratedNever() para chave primaria do UsuarioSistema (e-mail).
+
+Tabelas criadas via Migration:
+- AT_CLIENTES
+- AT_MOTORISTAS
+- AT_VEICULOS
+- AT_VIAGENS
+- AT_CHECKPOINTS
+- AT_USUARIOS_SISTEMA
+
+
+11. MIGRATIONS
+
+O projeto usa Migrations do EF Core para versionamento do banco.
+Comandos utilizados:
+- dotnet ef migrations add InitialCreate  - Cria a migration.
+- dotnet ef database update               - Aplica ao banco Oracle.
+
+A AppDbContextFactory foi criada para que o EF Core consiga rodar
+as migrations em design-time sem precisar subir a aplicacao.
+
+O papel das migrations e manter o banco sincronizado com o codigo.
+Se o modelo mudar, cria-se uma nova migration e aplica com database update.
+Para reverter, usa-se: dotnet ef database update 0.
+
+
+12. RELACIONAMENTOS IMPLEMENTADOS
+
+- AT_VIAGENS -> AT_CLIENTES     (N:1) - Uma viagem tem um cliente.
+- AT_VIAGENS -> AT_MOTORISTAS   (N:1) - Uma viagem tem um motorista.
+- AT_VIAGENS -> AT_VEICULOS     (N:1) - Uma viagem tem um veiculo.
+- AT_CHECKPOINTS -> AT_VIAGENS  (N:1) - Um checkpoint pertence a uma viagem.
+
+O que acontece ao deletar um registro:
+- Deletar Viagem: todos os checkpoints vinculados sao deletados (CASCADE).
+- Deletar Cliente/Motorista/Veiculo: nao e possivel se houver viagem vinculada (RESTRICT).
+
+
+13. TRATAMENTO DE ERROS
+
+O projeto usa GlobalExceptionMiddleware para tratamento centralizado.
+Ele intercepta todas as excecoes antes de chegarem ao cliente.
+
+Excecoes customizadas criadas:
+- NotFoundException    -> retorna 404 Not Found.
+- BadRequestException  -> retorna 400 Bad Request.
+- ConflictException    -> retorna 409 Conflict.
+- UnauthorizedException -> retorna 401 Unauthorized.
+
+Qualquer excecao nao tratada retorna 500 com mensagem generica.
+A resposta de erro segue o formato ErroResponse com:
+- timestamp, status, erro, mensagem, caminho, campos.
+
+
+14. SEGURANCA E JWT
+
+A API usa autenticacao JWT com BCrypt para senhas.
+
+Rotas publicas (sem token):
+- /api/auth/register
+- /api/auth/login
+- / (Swagger)
+
+Todas as demais rotas exigem Bearer Token no header Authorization.
+
+O JwtService gera tokens com:
+- Claims: email do usuario.
+- Expiracão: 24 horas.
+- Algoritmo: HmacSha256.
+
+O BCrypt e usado para hashear a senha antes de salvar no banco.
+Na autenticacao, o BCrypt.Verify compara a senha digitada com o hash salvo.
+
+
+15. AUTENTICACAO - FLUXO COMPLETO
+
+Registro:
+POST /api/auth/register
+{
+  "usuario": "admin",
+  "email": "admin@astrotrack.com",
+  "senha": "senha123"
+}
+Retorna 201 com token JWT.
+
+Login:
+POST /api/auth/login
+{
+  "email": "admin@astrotrack.com",
+  "senha": "senha123"
+}
+Retorna 200 com token JWT.
+
+Uso do token:
+Header: Authorization: Bearer {token}
+No Swagger: clicar em Authorize e inserir "Bearer {token}".
+
+
+16. REGRAS DE NEGOCIO IMPLEMENTADAS
+
+- Cliente precisa estar ATIVO para participar de uma viagem.
+- Motorista precisa estar ATIVO para conduzir uma viagem.
+- Veiculo nao pode estar EM_MANUTENCAO ou INATIVO para ser alocado.
+- Motorista e veiculo nao podem estar em duas viagens EM_ANDAMENTO ao mesmo tempo.
+- Viagem com status FINALIZADA exige dataFim preenchida.
+- Data de fim nao pode ser anterior a data de inicio.
+- Nao e possivel registrar checkpoint em viagem FINALIZADA ou CANCELADA.
+- Nao e possivel deletar uma viagem com status EM_ANDAMENTO.
+- Ao iniciar viagem (EM_ANDAMENTO), veiculo muda automaticamente para EM_VIAGEM.
+- Ao finalizar ou cancelar viagem, veiculo volta automaticamente para DISPONIVEL.
+- CNPJ, CPF, CNH, placa e e-mail sao unicos no banco (retornam 409 se duplicados).
+
+
+17. SWAGGER E DOCUMENTACAO
+
+A documentacao usa Swashbuckle.AspNetCore.
+O Swagger abre direto na raiz da aplicacao (RoutePrefix = string.Empty).
+Todos os endpoints estao documentados com summary e ProducesResponseType.
+O Swagger tem autenticacao Bearer configurada para testar endpoints protegidos.
+
+Acesso:
+- Local: http://localhost:5000
+- Deploy: link publico no README do GitHub.
+
+
+18. CORS
+
+O CORS esta configurado para aceitar qualquer origem, metodo e header.
+Isso permite que o app mobile e outros clientes consumam a API sem restricao.
+Configurado com a politica "AllowAll" no Program.cs.
+
+
+19. COMO O PROJETO ESTA ORGANIZADO
+
+Pergunta: Como o projeto esta organizado?
+Resposta: O projeto segue arquitetura em camadas com separacao clara de responsabilidades.
+Controllers recebem as requisicoes. Services executam as regras de negocio.
+Repositories acessam o banco via EF Core. DTOs transportam os dados.
+Cada camada se comunica apenas com a camada imediatamente abaixo.
+As interfaces ficam em arquivos unicos (IRepositories.cs, IServices.cs) e as
+implementacoes tambem (Repositories.cs, Services.cs), seguindo o padrao do projeto.
+
+Pergunta: Por que escolheram essa arquitetura?
+Resposta: A arquitetura em camadas facilita manutencao, testabilidade e escalabilidade.
+O Repository Pattern desacopla o acesso a dados da logica de negocio.
+As interfaces permitem trocar a implementacao sem afetar outras camadas.
+O uso de Primary Constructors do C# 12 deixa o codigo mais limpo e conciso.
+
+Pergunta: Como voces adicionariam uma nova funcionalidade?
+Resposta: Seguiriamos o mesmo padrao ja estabelecido no projeto:
+1. Criar o Model em Models/.
+2. Adicionar o DbSet no AppDbContext e configurar via Fluent API.
+3. Criar os DTOs (Request e Response) em DTOs/.
+4. Adicionar a interface no IRepositories.cs.
+5. Implementar o repository no Repositories.cs.
+6. Adicionar a interface no IServices.cs.
+7. Implementar o service no Services.cs com as regras de negocio.
+8. Criar o Controller em Controllers/.
+9. Registrar tudo no Program.cs.
+10. Criar nova Migration e aplicar no banco.
+
+
+20. BANCO DE DADOS E RELACIONAMENTOS
+
+Pergunta: Como o banco de dados foi modelado?
+Resposta: O banco foi modelado com 6 tabelas relacionais no Oracle.
+As entidades foram configuradas via Fluent API no OnModelCreating do AppDbContext.
+Os enums sao salvos como VARCHAR2 usando HasConversion<string>().
+As chaves primarias usam IDENTITY (auto-incremento) via UseIdentityColumn().
+Indices unicos foram criados para CNPJ, CPF, CNH, placa e e-mail.
+
+Pergunta: Qual relacionamento foi implementado e por que?
+Resposta: Foram implementados relacionamentos N:1 e cascata.
+Viagem tem N:1 com Cliente, Motorista e Veiculo porque uma viagem precisa
+de exatamente um de cada. Checkpoint tem N:1 com Viagem porque uma viagem
+pode ter muitos checkpoints de rastreamento GPS.
+O CASCADE DELETE foi usado em Checkpoint -> Viagem para que ao deletar
+uma viagem, seus checkpoints sejam removidos automaticamente.
+O RESTRICT foi usado em Viagem -> Cliente/Motorista/Veiculo para impedir
+a remocao de um recurso que ainda tem viagens vinculadas.
+
+Pergunta: O que acontece com os dados relacionados ao deletar um registro?
+Resposta: Ao deletar uma Viagem, todos os Checkpoints vinculados sao deletados em cascata.
+Ao tentar deletar um Cliente, Motorista ou Veiculo que possui Viagens vinculadas,
+o banco retorna erro de integridade referencial (RESTRICT), impedindo a operacao.
+
+
+21. MIGRATIONS
+
+Pergunta: O que sao migrations e qual o papel delas no projeto?
+Resposta: Migrations sao snapshots das mudancas no modelo de dados ao longo do tempo.
+Elas permitem versionar o esquema do banco junto com o codigo-fonte.
+O EF Core gera o SQL automaticamente a partir das mudancas nas entidades C#.
+No projeto, usamos a InitialCreate para criar todas as 6 tabelas no Oracle.
+A AppDbContextFactory foi criada para que as migrations funcionem em design-time.
+
+Pergunta: Como voces gerenciariam mudancas no banco ao longo do tempo?
+Resposta: Para cada mudanca no modelo (nova coluna, nova tabela, novo indice),
+criariamos uma nova migration com nome descritivo:
+dotnet ef migrations add NomeDaMudanca
+dotnet ef database update
+Assim o historico de mudancas fica registrado na pasta Migrations/
+e no __EFMigrationsHistory do banco, garantindo rastreabilidade.
+
+
+22. DEMONSTRACAO DA API
+
+Pergunta: Mostrem a aplicacao funcionando de ponta a ponta.
+Resposta - Sequencia para demonstrar:
+1. Abrir o Swagger no link do deploy.
+2. POST /api/auth/register - registrar usuario.
+3. POST /api/auth/login - fazer login e copiar o token.
+4. Clicar em Authorize e inserir "Bearer {token}".
+5. POST /api/clientes - criar um cliente ATIVO.
+6. POST /api/motoristas - criar um motorista ATIVO.
+7. POST /api/veiculos - criar um veiculo DISPONIVEL.
+8. POST /api/viagens - criar viagem com status EM_ANDAMENTO.
+9. GET /api/veiculos/{id} - mostrar que o veiculo mudou para EM_VIAGEM.
+10. POST /api/checkpoints - registrar posicao GPS.
+11. GET /api/checkpoints/viagem/{id} - mostrar historico de rastreamento.
+12. PUT /api/viagens/{id} - finalizar viagem com dataFim.
+13. GET /api/veiculos/{id} - mostrar que o veiculo voltou para DISPONIVEL.
+
+Pergunta: Como a aplicacao trata entradas invalidas?
+Resposta: As validacoes nos DTOs retornam 400 automaticamente com mensagem descritiva.
+As regras de negocio lancam excecoes customizadas (BadRequestException, ConflictException)
+que sao interceptadas pelo GlobalExceptionMiddleware e retornam respostas padronizadas.
+Nenhuma excecao chega crua ao cliente - todas sao tratadas e formatadas.
+
+Pergunta: Como voces testaram as rotas da API?
+Resposta: Testamos via Swagger com a autenticacao Bearer configurada.
+Testamos o fluxo completo: registro, login, CRUD de todas as entidades,
+regras de negocio (cliente inativo, veiculo em manutencao, viagem em andamento),
+erros de duplicidade, recursos inexistentes e rastreamento GPS via checkpoints.
+
+
+23. DOCUMENTACAO
+
+Pergunta: Me expliquem o diagrama do README com as proprias palavras.
+Resposta: O README mostra a estrutura de pastas do projeto com a descricao de cada camada.
+A tabela de endpoints lista todos os 26 endpoints com metodo, rota, descricao,
+se precisa de autenticacao e quais codigos HTTP podem retornar.
+Os exemplos de requisicao mostram o JSON esperado para cada operacao.
+A tabela de regras de negocio lista todas as validacoes implementadas nos Services.
+As instrucoes de execucao permitem que qualquer pessoa clone e rode o projeto.
+
+Pergunta: Qual foi o maior desafio do projeto e como resolveram?
+Resposta: O maior desafio foi a compatibilidade do Oracle com o EF Core.
+O Oracle nao suporta o tipo BOOLEAN nativo, entao os campos BotaoPanico e PortaAberta
+do Checkpoint precisaram ser mapeados como NUMBER(1) com conversao explicita no Fluent API.
+Alem disso, o Oracle nao suporta FirstOrDefaultAsync() e AnyAsync() em algumas versoes,
+entao usamos ToListAsync() + FirstOrDefault() e CountAsync() > 0 como alternativas.
+
+Pergunta: O que mudariam se pudessem refazer?
+Resposta: Adicionariamos paginacao nos endpoints de listagem para melhor performance.
+Implementariamos cache em memoria para reducao de consultas repetidas ao banco.
+Adicionariamos testes automatizados com xUnit para garantir a cobertura das regras de negocio.
+Separariamos os arquivos de repositorio e service em arquivos individuais por entidade.
+
+
+24. ENUMS ACEITOS
+
+StatusCadastro (Clientes e Motoristas):
+- ATIVO
+- INATIVO
+- BLOQUEADO
+
+StatusVeiculo:
+- DISPONIVEL
+- EM_MANUTENCAO
+- EM_VIAGEM
+- INATIVO
+
+StatusViagem:
+- AGENDADA
+- EM_ANDAMENTO
+- FINALIZADA
+- CANCELADA
+
+
+25. FRASE CURTA PARA APRESENTAR
+
+O AstroTrack e uma API REST em ASP.NET Core com .NET 9 para rastreamento de frotas
+via satelite em zonas sem sinal terrestre. O projeto segue arquitetura em camadas com
+Repository Pattern, possui CRUD completo para 5 entidades, DTOs com C# Records,
+validacao com Data Annotations, EF Core com Oracle via Fluent API, Migrations,
+tratamento global de erros com middleware customizado, Swagger com autenticacao Bearer,
+CORS configurado e seguranca com JWT e BCrypt. Os relacionamentos incluem N:1 entre
+Viagem e Cliente, Motorista e Veiculo, e N:1 com CASCADE entre Checkpoint e Viagem.
+
+================================================
+FIM DO RESUMO
+================================================
