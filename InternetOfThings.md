@@ -1,5 +1,21 @@
 # AstroTrack
 
+**IMPORTANTE** -> Se faz necessário compilar o projeto com o ip da maquina quando for rodar! Segue o passo a passo:
+Abrir o arquivo html e o sketch.ino e achar onde está o campo com o IP em ambos (192.xx.xx.x) e trocar pelo ip atual da máquina.
+> Para saber o IP basta abrir o terminal de comando do windows e rodar o comando ´ipconfig´, ele aparecerá mais ou menos assim:
+> ```
+> Adaptador Ethernet Ethernet:
+>   Sufixo DNS específico de conexão. . . . . . :
+>   Endereço IPv4. . . . . . . .  . . . . . . . : 192.168.10.4 ---> ESTE AQUI É O IP que deve ser trocado no código
+>   Máscara de Sub-rede . . . . . . . . . . . . : 255.255.255.0
+>   Gateway Padrão. . . . . . . . . . . . . . . : 192.168.10.1
+> ```
+Após trocar o ip, se faz necessário compilar o projeto novamente: 
+- Verfique se a placa está identifica corretamente (esp32 DevModule)
+- Verifique se todas as esxtensões necessárias estão instaladas
+- No meno superior clique em ´Sketch´
+- Por fim em ´Export Compiled Binary´
+
 O AstroTrack é uma solução de monitoramento logístico de ponta a ponta, desenvolvida para modernizar a gestão de frotas e a segurança de motoristas da Global Solution. O conceito central gira em torno de uma "logística orbital", onde cada veículo é tratado como uma unidade em missão, monitorado por telemetria constante.
 
 ## OBJETIVO DO PROJETO
