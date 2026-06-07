@@ -1,5 +1,7 @@
 # DOCUMENTAÇÃO TÉCNICA - PROJETO ASTROTRACK (MOBILE)
 
+**IMPORTANTE** -> Quando for rodar a aplicação mobile é de extrema importância que abra a API no Render e deixe ela ´rodando´, se não nada funcionará!
+
 ## 1. Visão Geral do Projeto
 O **AstroTrack** é uma plataforma de gerenciamento logístico e monitoramento para motoristas. O aplicativo permite o acompanhamento de viagens, check-ins geolocalizados, monitoramento de status de dispositivos IoT (ESP32) e gestão de perfil, focando em segurança e eficiência operacional.
 
