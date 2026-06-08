@@ -1,5 +1,5 @@
 # Documentações para apresentação presencial
-Cada arquivo contém o respectivo resumo de cada matéria
+Cada arquivo contém o respectivo resumo de cada disciplina
 
 ### Mastering Relational and Non-Relational Database
 Acesse -> [Resumo DB](DataBase.md)
