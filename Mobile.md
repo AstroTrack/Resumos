@@ -69,3 +69,9 @@ O projeto extrai a complexidade das telas para Hooks especializados, garantindo 
 - O frontend espera que as datas sejam retornadas no padrão ISO 8601.
 - As coordenadas são enviadas como números decimais (float).
 - Em caso de erro 401 (Não autorizado), o frontend está preparado para limpar a sessão e redirecionar ao Login.
+
+## 8. Sign In e Sign Up
+
+```json    
+ {"email": "rf@gmail.com", "senha": "rafael1234"}
+```
