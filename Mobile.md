@@ -3,6 +3,7 @@
 > Como rodar o projeto
 >
 > ```bash
+> npm install
 > npm start -c
 >```
 > Após isso, basta pressionar `a` para abrir o emulador.
