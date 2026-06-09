@@ -8,6 +8,7 @@ Acesse -> [Resumo DB](DataBase.md)
 
 ### Disruptive Architectures: IoT, IOB & Generative IA
 Acesse -> [Resumo IOT](InternetOfThings.md)
+
 Acesse -> [Resumo da compilação](Compilacao.md)
 
 ---
