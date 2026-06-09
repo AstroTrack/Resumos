@@ -1,5 +1,12 @@
 # DOCUMENTAÇÃO TÉCNICA - PROJETO ASTROTRACK (MOBILE)
 
+> Como rodar o projeto
+>
+> ```bash
+> npm start -c
+>```
+> Após isso, basta pressionar `a` para abrir o emulador.
+>
 ## 1. Visão Geral do Projeto
 O **AstroTrack** é uma plataforma de gerenciamento logístico e monitoramento para motoristas. O aplicativo permite o acompanhamento de viagens, check-ins geolocalizados, monitoramento de status de dispositivos IoT (ESP32) e gestão de perfil, focando em segurança e eficiência operacional.
 
